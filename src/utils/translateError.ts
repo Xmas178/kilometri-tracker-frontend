@@ -31,13 +31,13 @@ const FIELD_ERRORS: Record<string, string> = {
     'invalid': 'Virheellinen arvo',
     'required': 'Pakollinen kenttä',
     'blank': 'Pakollinen kenttä',
-    'empty': 'Ei voi olla tyhjä',  // <- LISÄÄ
+    'empty': 'Ei voi olla tyhjä',
     'too short': 'Liian lyhyt',
     'too long': 'Liian pitkä',
     'must be': 'Virheellinen muoto',
-    'greater than or equal': 'Arvon tulee olla suurempi kuin',  // <- LISÄÄ
-    'less than or equal': 'Arvon tulee olla pienempi kuin',  // <- LISÄÄ
-    'ensure this value': 'Virheellinen arvo',  // <- LISÄÄ
+    'greater than or equal': 'Arvon tulee olla suurempi kuin 0',
+    'less than or equal': 'Arvon tulee olla pienempi kuin',
+    'ensure this value': 'Virheellinen arvo',
 };
 
 // Field name translations

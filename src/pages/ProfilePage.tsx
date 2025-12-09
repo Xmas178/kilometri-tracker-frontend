@@ -147,12 +147,6 @@ export function ProfilePage() {
         } catch (error: any) {
             console.error('Change password error:', error);
 
-            let errorMsg = 'Salasanan vaihto epäonnistui';
-            if (error.response?.data?.old_password) {
-                errorMsg = 'Vanha salasana on väärin';
-            } else if (error.response?.data?.new_password) {
-                errorMsg = error.response.data.new_password[0];
-            }
 
             notifications.show({
                 title: 'Virhe',

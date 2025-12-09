@@ -106,10 +106,7 @@ export function ReportsPage() {
         } catch (error: any) {
             console.error('Generate report error:', error);
 
-            let errorMsg = 'Raportin luominen epäonnistui';
-            if (error.response?.data?.detail) {
-                errorMsg = error.response.data.detail;
-            }
+
 
             notifications.show({
                 title: 'Virhe',
