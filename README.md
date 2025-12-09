@@ -16,10 +16,13 @@ React + TypeScript + Mantine UI frontend for business trip tracking application.
 
 - User authentication (login/register with JWT)
 - Dark mode toggle
-- Trip management (add, list, delete trips)
+- Trip management (add, edit, delete trips)
 - Monthly reports with PDF generation
+- Profile management (edit user info, change password)
+- Dashboard with statistics
 - Responsive design
 - Finnish language UI
+- Backend error translations (English to Finnish)
 
 ## Project Structure
 ```
@@ -34,14 +37,15 @@ src/
 ├── pages/            # Page components
 │   ├── LoginPage.tsx
 │   ├── RegisterPage.tsx
+│   ├── DashboardPage.tsx
 │   ├── TripsPage.tsx
-│   ├── ReportsPage.tsx (TODO)
-│   ├── DashboardPage.tsx (TODO)
-│   └── ProfilePage.tsx (TODO)
+│   ├── ReportsPage.tsx
+│   └── ProfilePage.tsx
 ├── types/            # TypeScript type definitions
 │   └── index.ts      # API response types
 ├── utils/            # Utility functions
-│   └── ColorSchemeProvider.tsx  # Dark mode context
+│   ├── ColorSchemeProvider.tsx  # Dark mode context
+│   └── translateError.ts        # Backend error translation
 ├── App.tsx           # Main app with routes
 ├── main.tsx          # Entry point
 └── theme.ts          # Mantine theme configuration
@@ -56,11 +60,6 @@ src/
 
 ### Setup
 ```bash
-# Clone repository
-cd /home/crake178/projects/
-git clone <repository-url>
-cd kilometri-tracker-frontend
-
 # Install dependencies
 npm install
 
@@ -72,7 +71,7 @@ The app will be available at: http://localhost:5173
 
 ## Environment Configuration
 
-Backend API URL is hardcoded in `src/api/client.ts`:
+Backend API URL is configured in `src/api/client.ts`:
 ```typescript
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 ```
@@ -104,26 +103,22 @@ Change this if your backend runs on a different port.
 - `getTrip(id)` - Get single trip
 - `createTrip(data)` - Create new trip
 - `updateTrip(id, data)` - Update trip (PUT)
-- `patchTrip(id, data)` - Partial update (PATCH)
 - `deleteTrip(id)` - Delete trip
 - `getMonthlySummary(year, month)` - Get monthly statistics
-- `calculateDistance(start, end)` - Calculate distance via Google Maps (placeholder)
 
 **Reports:**
 - `getReports(params)` - List generated reports
-- `getReport(id)` - Get single report
 - `generateReport(year, month)` - Generate monthly PDF report
 - `downloadPDF(url)` - Open PDF in new tab
-- `forceDownloadPDF(url, filename)` - Force download PDF
 
-## Development Notes
+## Development
 
 ### Code Style
 
 - All code comments in English (CodeNob Dev standard)
 - Finnish language for UI text
 - TypeScript strict mode enabled
-- ESLint + Prettier for code formatting
+- ESLint for code quality
 
 ### Component Patterns
 
@@ -136,10 +131,40 @@ Login/Register pages redirect to `/dashboard` if user is already authenticated.
 **Dark Mode:**
 Managed via ColorSchemeProvider context. Preference saved to localStorage.
 
-### Known Issues
+## Docker
 
-- Date picker locale is English (Mantine defaults)
-- Some backend error messages in English (will be translated in frontend)
+### Build Docker Image
+```bash
+docker build -t kilometri-frontend .
+```
+
+### Run Container
+```bash
+docker run -p 80:80 kilometri-frontend
+```
+
+### Docker Compose
+```bash
+# From project root with docker-compose.yml
+docker-compose up
+
+# Frontend available at: http://localhost/
+```
+
+## CI/CD
+
+GitHub Actions workflow runs automatically on push to main:
+
+1. Checkout code
+2. Setup Node.js 18
+3. Install dependencies (npm ci)
+4. Run ESLint (allows warnings)
+5. Build project (npm run build)
+6. Verify build output (dist/ directory)
+7. Build Docker image
+8. Verify Docker image
+
+Pipeline status: https://github.com/Xmas178/kilometri-tracker-frontend/actions
 
 ## Building for Production
 ```bash
@@ -152,31 +177,88 @@ npm run preview
 
 Production files will be in `dist/` directory.
 
-## TODO
+## Completed Features
 
-- [ ] Reports page (PDF generation)
-- [ ] Dashboard page (statistics overview)
-- [ ] Profile page (edit user info)
-- [ ] Trip edit functionality
-- [ ] Google Maps distance calculation integration
-- [ ] Better error handling and validation
-- [ ] Loading states for all API calls
-- [ ] Unit tests with Vitest
-- [ ] E2E tests with Playwright
-- [ ] Docker containerization
-- [ ] CI/CD pipeline
+**Authentication & User Management:**
+- Login/Register pages with validation
+- JWT authentication with auto-refresh
+- Profile page (edit user info, change password)
+- Secure logout with token blacklisting
+
+**Trip Management:**
+- Dashboard page with statistics (total km, trip counts, monthly summary)
+- Trips page (add, edit, delete trips)
+- Date picker with Finnish formatting
+- Input validation with translated error messages
+- Real-time data updates
+
+**Reports & Analytics:**
+- Reports page with PDF generation
+- Monthly trip summaries
+- PDF download directly in browser
+- Trip statistics visualization
+
+**UI/UX:**
+- Dark mode toggle (persistent via localStorage)
+- Mantine UI component library
+- Responsive design
+- Finnish language UI
+- 8-second notification duration
+- Loading states for all async operations
+
+**Developer Experience:**
+- TypeScript strict mode
+- ESLint configured
+- Backend error translation system (English to Finnish)
+- Comprehensive English code comments
+- Clean component architecture
+
+**DevOps:**
+- Docker containerization with nginx
+- GitHub Actions CI/CD pipeline
+- Automated build and test on push
+- Security audit passed (0 vulnerabilities)
+- Production-ready nginx configuration
+
+## TODO (Future Enhancements)
+
+- Google Maps distance calculation integration
+- Excel report generation
+- Email delivery for reports
+- Trip filtering by date range
+- Chart visualizations (Dashboard)
+- Trip search functionality
+- Bulk trip import (CSV/Excel)
+- Multi-language support
+- Unit tests with Vitest
+- E2E tests with Playwright
+- Progressive Web App (PWA)
+- Offline mode support
+- Production deployment automation
 
 ## Backend Requirements
 
 Backend must be running with CORS enabled for:
 - http://localhost:5173
 - http://127.0.0.1:5173
+- http://localhost (Docker)
 
 Backend `.env` file:
 ```
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost
 ```
+
+## Known Issues
+
+- Date picker locale is English (Mantine defaults)
+- Some TypeScript `any` types in error handling (non-critical)
 
 ## License
 
-Private project - Sami T
+Private project - CodeNob Dev
+
+## Author
+
+Sami - CodeNob Dev
+- GitHub: https://github.com/Xmas178
+- Portfolio: www.tommilammi.fi
