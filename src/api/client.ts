@@ -82,14 +82,18 @@ apiClient.interceptors.request.use(
 // Handles token refresh if access token expired
 
 apiClient.interceptors.response.use(
-    // If response is successful, just return it
     (response: any) => {
         return response;
     },
 
-    // If response has error, check if it's 401 Unauthorized
     async (error: AxiosError) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+
+        // Don't refresh token for login/register endpoints
+        const url = originalRequest.url || '';
+        if (url.includes('/auth/login/') || url.includes('/auth/register/')) {
+            return Promise.reject(error);
+        }
 
         // If error is 401 and we haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
@@ -97,34 +101,27 @@ apiClient.interceptors.response.use(
 
             const refreshToken = getRefreshToken();
 
-            // If we have refresh token, try to get new access token
             if (refreshToken) {
                 try {
-                    // Call backend refresh endpoint
                     const response = await axios.post(
                         `${API_BASE_URL}/auth/token/refresh/`,
                         { refresh: refreshToken }
                     );
 
                     const newAccessToken = response.data.access;
-
-                    // Save new access token
                     localStorage.setItem('access_token', newAccessToken);
 
-                    // Retry original request with new token
                     if (originalRequest.headers) {
                         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                     }
 
                     return apiClient(originalRequest);
                 } catch (refreshError) {
-                    // Refresh failed, user needs to login again
                     clearTokens();
                     window.location.href = '/login';
                     return Promise.reject(refreshError);
                 }
             } else {
-                // No refresh token, redirect to login
                 clearTokens();
                 window.location.href = '/login';
             }

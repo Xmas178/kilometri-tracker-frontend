@@ -11,18 +11,12 @@ import { isAuthenticated } from './api/client';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage.tsx';
 import { TripsPage } from './pages/TripsPage.tsx';
+import { ReportsPage } from './pages/ReportsPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 
 
-
-// Import pages (we'll create these next)
-// TODO: Create these page components
-// import { LoginPage } from './pages/LoginPage';
-// import { RegisterPage } from './pages/RegisterPage';
-// import { DashboardPage } from './pages/DashboardPage';
-// import { TripsPage } from './pages/TripsPage';
-// import { ReportsPage } from './pages/ReportsPage';
-// import { ProfilePage } from './pages/ProfilePage';
 
 // ============================================
 // PROTECTED ROUTE WRAPPER
@@ -110,11 +104,7 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              {/* <DashboardPage /> */}
-              <div>
-                <h1>Dashboard (TODO)</h1>
-                <p>Welcome to KilometriTracker!</p>
-              </div>
+              <DashboardPage />
             </ProtectedRoute>
           }
         />
@@ -132,10 +122,7 @@ function App() {
           path="/reports"
           element={
             <ProtectedRoute>
-              {/* <ReportsPage /> */}
-              <div>
-                <h1>Reports Page (TODO)</h1>
-              </div>
+              <ReportsPage />
             </ProtectedRoute>
           }
         />
@@ -144,10 +131,7 @@ function App() {
           path="/profile"
           element={
             <ProtectedRoute>
-              {/* <ProfilePage /> */}
-              <div>
-                <h1>Profile Page (TODO)</h1>
-              </div>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

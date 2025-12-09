@@ -25,10 +25,11 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { login } from '../api/auth.ts';
+import { translateBackendError } from '../utils/translateError.ts';
 
 export function LoginPage() {
     const navigate = useNavigate();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     const { colorScheme, toggleColorScheme } = useColorScheme();
 
     // Loading state for submit button
@@ -51,21 +52,23 @@ export function LoginPage() {
 
             // Show success notification
             notifications.show({
-                title: 'Success!',
-                message: `Welcome back, ${response.user.username}!`,
+                title: 'Onnistui!',
+                message: `Tervetuloa takaisin, ${response.user.username}!`,
                 color: 'green',
+                autoClose: 8000,
             });
-            const { colorScheme, toggleColorScheme } = useColorScheme();
             // Redirect to dashboard
             navigate('/dashboard');
         } catch (error: any) {
             // Show error notification
             notifications.show({
-                title: 'Login failed',
-                message: error.response?.data?.detail || 'Invalid credentials',
+                title: 'Kirjautuminen epäonnistui',
+                message: translateBackendError(error),
                 color: 'red',
+                autoClose: 8000,
             });
-        } finally {
+        }
+        finally {
             setLoading(false);
         }
     };

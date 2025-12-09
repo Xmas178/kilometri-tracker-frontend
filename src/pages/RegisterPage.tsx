@@ -26,6 +26,7 @@ import { IconSun, IconMoon } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { register } from '../api/auth.ts';
 import { useColorScheme } from '../utils/ColorSchemeProvider.tsx';
+import { translateBackendError } from '../utils/translateError.ts';
 
 export function RegisterPage() {
     const navigate = useNavigate();
@@ -56,6 +57,7 @@ export function RegisterPage() {
                 title: 'Virhe',
                 message: 'Salasanat eivät täsmää',
                 color: 'red',
+                autoClose: 8000,
             });
             return;
         }
@@ -70,6 +72,7 @@ export function RegisterPage() {
                 title: 'Onnistui!',
                 message: `Tervetuloa, ${response.user.username}! Tili luotu.`,
                 color: 'green',
+                autoClose: 8000,
             });
 
             navigate('/dashboard');
@@ -77,43 +80,11 @@ export function RegisterPage() {
             console.error('=== REGISTER ERROR ===');
             console.error('Response data:', error.response?.data);
 
-            // Get error message from different possible locations
-            let errorMsg = 'Rekisteröinti epäonnistui';
-
-            if (error.response?.data) {
-                const data = error.response.data;
-
-                // Check for specific field errors
-                if (data.username) {
-                    errorMsg = `Käyttäjätunnus: ${data.username[0]}`;
-                } else if (data.email) {
-                    errorMsg = `Sähköposti: ${data.email[0]}`;
-                } else if (data.password) {
-                    errorMsg = `Salasana: ${data.password[0]}`;
-                } else if (data.non_field_errors) {
-                    // Translate common Django errors to Finnish
-                    const err = data.non_field_errors[0];
-                    if (err.includes('too common')) {
-                        errorMsg = 'Salasana on liian yleinen. Käytä vahvempaa salasanaa (esim. isot/pienet kirjaimet, numerot, erikoismerkit).';
-                    } else if (err.includes('too short')) {
-                        errorMsg = 'Salasana on liian lyhyt. Vähintään 8 merkkiä vaaditaan.';
-                    } else if (err.includes('entirely numeric')) {
-                        errorMsg = 'Salasana ei voi olla pelkkiä numeroita.';
-                    } else if (err.includes('too similar')) {
-                        errorMsg = 'Salasana on liian samanlainen käyttäjätietojen kanssa.';
-                    } else {
-                        errorMsg = err;
-                    }
-                } else if (data.detail) {
-                    errorMsg = data.detail;
-                }
-            }
-
             notifications.show({
                 title: 'Rekisteröinti epäonnistui',
-                message: errorMsg,
+                message: translateBackendError(error),
                 color: 'red',
-                autoClose: 8000, // Show for 8 seconds (longer for password hint)
+                autoClose: 8000,
             });
         }
         finally {

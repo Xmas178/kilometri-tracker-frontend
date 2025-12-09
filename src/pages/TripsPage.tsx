@@ -25,10 +25,11 @@ import {
     LoadingOverlay
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconEdit } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { getTrips, createTrip, deleteTrip } from '../api/trips.ts';
-import type { Trip } from '../types/index.ts';
+import { getTrips, createTrip, deleteTrip, updateTrip } from '../api/trips.ts'; import type { Trip } from '../types/index.ts';
+import { translateBackendError } from '../utils/translateError.ts';
+
 
 export function TripsPage() {
     // State for trips list
@@ -47,6 +48,8 @@ export function TripsPage() {
         distance_km: 0,
         purpose: '',
     });
+    // State for editing (track which trip is being edited)
+    const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
     // Fetch trips on component mount
     useEffect(() => {
@@ -59,11 +62,12 @@ export function TripsPage() {
         try {
             const response = await getTrips({ ordering: '-date' });
             setTrips(response.results);
-        } catch (error) {
+        } catch (error: any) {
             notifications.show({
                 title: 'Virhe',
-                message: 'Matkojen hakeminen epäonnistui',
+                message: translateBackendError(error),
                 color: 'red',
+                autoClose: 8000,
             });
         } finally {
             setLoading(false);
@@ -87,6 +91,7 @@ export function TripsPage() {
                 title: 'Onnistui!',
                 message: 'Matka lisätty',
                 color: 'green',
+                autoClose: 8000,
             });
 
             // Reset form and close modal
@@ -104,20 +109,17 @@ export function TripsPage() {
         } catch (error: any) {
             console.error('=== ADD TRIP ERROR ===');
             console.error('Error response:', error.response?.data);
-            console.error('Error response:', error.response?.data);
-            console.error('Start address error:', error.response?.data?.start_address?.[0]);
 
             notifications.show({
                 title: 'Virhe',
-                message: 'Matkan lisääminen epäonnistui',
+                message: translateBackendError(error),
                 color: 'red',
+                autoClose: 8000,
             });
-
         } finally {
             setSubmitting(false);
         }
     };
-
     // Handle trip deletion
     const handleDelete = async (id: number) => {
         if (!confirm('Haluatko varmasti poistaa tämän matkan?')) {
@@ -130,14 +132,88 @@ export function TripsPage() {
                 title: 'Poistettu',
                 message: 'Matka poistettu',
                 color: 'blue',
+                autoClose: 8000,
             });
             fetchTrips();
-        } catch (error) {
+        } catch (error: any) {
             notifications.show({
                 title: 'Virhe',
-                message: 'Matkan poistaminen epäonnistui',
+                message: translateBackendError(error),
                 color: 'red',
+                autoClose: 8000,
             });
+        }
+    };
+
+    // Handle trip edit
+    const handleEditClick = (trip: Trip) => {
+        setEditingTrip(trip);
+        setFormData({
+            date: trip.date,
+            start_address: trip.start_address,
+            end_address: trip.end_address,
+            distance_km: trip.distance_km,
+            purpose: trip.purpose || '',
+        });
+        setModalOpened(true);
+    };
+
+    // Handle trip update
+    const handleUpdateTrip = async () => {
+        if (!editingTrip) return;
+
+        setSubmitting(true);
+        try {
+            await updateTrip(editingTrip.id, {
+                date: formData.date,
+                start_address: formData.start_address,
+                end_address: formData.end_address,
+                distance_km: formData.distance_km,
+                purpose: formData.purpose,
+                is_manual: true,
+            });
+
+            notifications.show({
+                title: 'Päivitetty!',
+                message: 'Matka päivitetty onnistuneesti',
+                color: 'green',
+                autoClose: 8000,
+            });
+
+            // Reset form and close modal
+            setFormData({
+                date: new Date().toISOString().split('T')[0],
+                start_address: '',
+                end_address: '',
+                distance_km: 0,
+                purpose: '',
+            });
+            setEditingTrip(null);
+            setModalOpened(false);
+
+            // Refresh trips list
+            fetchTrips();
+        } catch (error: any) {
+            console.error('=== UPDATE TRIP ERROR ===');
+            console.error('Error response:', error.response?.data);
+
+            notifications.show({
+                title: 'Virhe',
+                message: translateBackendError(error),
+                color: 'red',
+                autoClose: 8000,
+            });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Handle save (either add or update)
+    const handleSaveTrip = () => {
+        if (editingTrip) {
+            handleUpdateTrip();
+        } else {
+            handleAddTrip();
         }
     };
 
@@ -184,13 +260,22 @@ export function TripsPage() {
                                         <Table.Td>{trip.distance_km} km</Table.Td>
                                         <Table.Td>{trip.purpose}</Table.Td>
                                         <Table.Td>
-                                            <ActionIcon
-                                                color="red"
-                                                variant="subtle"
-                                                onClick={() => handleDelete(trip.id)}
-                                            >
-                                                <IconTrash size={18} />
-                                            </ActionIcon>
+                                            <Group gap="xs">
+                                                <ActionIcon
+                                                    color="blue"
+                                                    variant="subtle"
+                                                    onClick={() => handleEditClick(trip)}
+                                                >
+                                                    <IconEdit size={18} />
+                                                </ActionIcon>
+                                                <ActionIcon
+                                                    color="red"
+                                                    variant="subtle"
+                                                    onClick={() => handleDelete(trip.id)}
+                                                >
+                                                    <IconTrash size={18} />
+                                                </ActionIcon>
+                                            </Group>
                                         </Table.Td>
                                     </Table.Tr>
                                 ))}
@@ -200,11 +285,21 @@ export function TripsPage() {
                 </Paper>
             </Stack>
 
-            {/* Add Trip Modal */}
+            {/* Add/Edit Trip Modal */}
             <Modal
                 opened={modalOpened}
-                onClose={() => setModalOpened(false)}
-                title="Lisää uusi matka"
+                onClose={() => {
+                    setModalOpened(false);
+                    setEditingTrip(null);
+                    setFormData({
+                        date: new Date().toISOString().split('T')[0],
+                        start_address: '',
+                        end_address: '',
+                        distance_km: 0,
+                        purpose: '',
+                    });
+                }}
+                title={editingTrip ? 'Muokkaa matkaa' : 'Lisää uusi matka'}
                 size="lg"
             >
                 <Stack>
@@ -260,11 +355,14 @@ export function TripsPage() {
                     />
 
                     <Group justify="flex-end">
-                        <Button variant="subtle" onClick={() => setModalOpened(false)}>
+                        <Button variant="subtle" onClick={() => {
+                            setModalOpened(false);
+                            setEditingTrip(null);
+                        }}>
                             Peruuta
                         </Button>
-                        <Button onClick={handleAddTrip} loading={submitting}>
-                            Lisää matka
+                        <Button onClick={handleSaveTrip} loading={submitting}>
+                            {editingTrip ? 'Tallenna muutokset' : 'Lisää matka'}
                         </Button>
                     </Group>
                 </Stack>

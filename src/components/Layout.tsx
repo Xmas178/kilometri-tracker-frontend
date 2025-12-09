@@ -30,6 +30,7 @@ export function Layout({ children }: LayoutProps) {
                 title: 'Kirjauduttu ulos',
                 message: 'Olet kirjautunut ulos onnistuneesti',
                 color: 'blue',
+                autoClose: 8000,
             });
             navigate('/login');
         } catch (error) {
